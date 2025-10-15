@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HS Cozinha Caseira - Cardápio Interativo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #1e7217; /* Verde escuro */
+      --secondary-color: #f8b325; /* Amarelo/Laranja */
+      --accent-color: #ef0505; /* Vermelho */
+      --background-color: #fff8e7;
+      --text-color: #333;
+      --card-bg: #fff;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--background-color);
+      margin: 0;
+      padding: 0;
+      color: var(--text-color);
+    }
+    header {
+      background-color: var(--secondary-color);
+      color: var(--text-color);
+      text-align: center;
+      padding: 1.5rem 1rem;
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    header small {
+      display: block;
+      font-size: 1rem;
+      font-weight: 400;
+      margin-top: 0.3rem;
+    }
+    main {
+      padding: 1rem;
+    }
+    h2 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 1.5rem;
+    }
+    #menu {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 1rem;
+      background: var(--card-bg);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    .card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    .card h3 {
+      margin: 0.5rem 0;
+      font-size: 1.25rem;
+      color: var(--primary-color);
+    }
+    .card p {
+      margin: 0.3rem 0;
+      font-size: 0.9rem;
+      flex-grow: 1;
+    }
+    .card .stock {
+      font-size: 0.85rem;
+      color: #777;
+      margin-bottom: 1rem;
+    }
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-top: auto;
+    }
+    .quantity-control button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .quantity-control input {
+      width: 40px;
+      text-align: center;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 0.3rem;
+      font-weight: 600;
+    }
+    #cart-section {
+      background: var(--card-bg);
+      margin-top: 2rem;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    #cart-items li {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #eee;
+    }
+    #customer-form .form-group {
+      margin-bottom: 1rem;
+    }
+    #customer-form label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+    }
+    #customer-form input, #customer-form select {
+      width: 100%;
+      padding: 0.7rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    #submit-order {
+      background-color: var(--accent-color);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.8rem 1.5rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      width: 100%;
+      transition: background 0.3s;
+      margin-top: 1rem;
+    }
+    #submit-order:hover {
+      background-color: #d00404;
+    }
+    #loading, #error-message {
+        text-align: center;
+        padding: 2rem;
+        font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    🍴 HS Cozinha Caseira 🍲
+    <small>Produtos 100% Naturais e Congelados</small>
+  </header>
+
+  <main>
+    <h2>Nosso Cardápio</h2>
+    <div id="loading">Carregando cardápio...</div>
+    <div id="error-message" style="display: none; color: red;"></div>
+    <div id="menu"></div>
+
+    <section id="cart-section">
+      <h2>Seu Pedido</h2>
+      <div id="cart-items">
+          <p id="empty-cart-message">Seu carrinho está vazio.</p>
+          <ul></ul>
+      </div>
+      <hr>
+      <form id="customer-form">
+          <h3>Detalhes da Entrega e Pagamento</h3>
+          <div class="form-group">
+              <label for="nomeCliente">Seu Nome:</label>
+              <input type="text" id="nomeCliente" required>
+          </div>
+          <div class="form-group">
+              <label for="telefoneCliente">Seu WhatsApp (com DDD):</label>
+              <input type="tel" id="telefoneCliente" placeholder="Ex: 11987654321" required>
+          </div>
+          <div class="form-group">
+              <label for="formaPagamento">Forma de Pagamento:</label>
+              <select id="formaPagamento" required>
+                  <option value="Pix">Pix</option>
+                  <option value="Cartao de Credito">Cartão de Crédito</option>
+                  <option value="Cartao de Debito">Cartão de Débito</option>
+                  <option value="Dinheiro">Dinheiro</option>
+              </select>
+          </div>
+          <button type="button" id="submit-order">Finalizar Pedido e Enviar via WhatsApp</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE_URL = "https://script.google.com/macros/s/AKfycbyotbP_uH7RG6g9fL6Fb6-lNtbH7dwyZO2eaKXLxbq4/dev";
+    const WHATSAPP_NUMBER = "5511999838162";
+    const cart = {};
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadMenu();
+        document.getElementById('submit-order').addEventListener('click', submitOrder);
+    });
+
+    async function loadMenu() {
+        try {
+            const res = await fetch(`${API_BASE_URL}?action=getMenu`);
+            const items = await res.json();
+            
+            const loadingDiv = document.getElementById('loading');
+            loadingDiv.style.display = 'none';
+
+            const container = document.getElementById('menu');
+            if (!items || items.length === 0) {
+                container.innerHTML = "<p style='text-align:center;'>Nenhum item disponível no momento.</p>";
+                return;
+            }
+
+            items.forEach(item => {
+                if (parseInt(item.estoque) > 0) { // Apenas exibe itens com estoque > 0
+                    const div = document.createElement('div');
+                    div.className = 'card';
+                    div.innerHTML = `
+                        <img src="${item.imagem || 'https://via.placeholder.com/300x200.png?text=HS+Cozinha'}" alt="${item.nome}">
+                        <h3>${item.nome}</h3>
+                        <p>${item.descricao}</p>
+                        <p class="stock"><b>Estoque:</b> ${item.estoque}</p>
+                        <div class="quantity-control">
+                            <button onclick="changeQuantity('${item.nome}', -1)">-</button>
+                            <input type="number" id="qty-${item.nome}" value="1" min="1" max="${item.estoque}" readonly>
+                            <button onclick="changeQuantity('${item.nome}', 1)">+</button>
+                        </div>
+                        <button class="add-to-cart-btn" onclick="addToCart('${item.nome}', ${item.estoque})">Adicionar ao Carrinho</button>
+                    `;
+                    container.appendChild(div);
+                }
+            });
+        } catch (err) {
+            document.getElementById('loading').style.display = 'none';
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.style.display = 'block';
+            errorDiv.innerText = "Erro ao carregar o cardápio. Tente novamente mais tarde.";
+            console.error(err);
+        }
+    }
+
+    function changeQuantity(itemName, amount) {
+        const input = document.getElementById(`qty-${itemName}`);
+        let currentValue = parseInt(input.value);
+        let newValue = currentValue + amount;
+        if (newValue < 1) newValue = 1;
+        if (newValue > parseInt(input.max)) newValue = parseInt(input.max);
+        input.value = newValue;
+    }
+
+    function addToCart(itemName, maxStock) {
+        const input = document.getElementById(`qty-${itemName}`);
+        const quantity = parseInt(input.value);
+        
+        if (cart[itemName]) {
+            cart[itemName] += quantity;
+        } else {
+            cart[itemName] = quantity;
+        }
+
+        if (cart[itemName] > maxStock) {
+            alert(`Desculpe, temos apenas ${maxStock} unidades de ${itemName} em estoque.`);
+            cart[itemName] = maxStock;
+        }
+        
+        updateCartDisplay();
+    }
+
+    function updateCartDisplay() {
+        const cartList = document.querySelector('#cart-items ul');
+        const emptyMessage = document.getElementById('empty-cart-message');
+        cartList.innerHTML = '';
+
+        if (Object.keys(cart).length === 0) {
+            emptyMessage.style.display = 'block';
+            return;
+        }
+        
+        emptyMessage.style.display = 'none';
+        for (const item in cart) {
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${item} <b>(x${cart[item]})</b></span>`;
+            cartList.appendChild(li);
+        }
+    }
+
+    async function submitOrder() {
+        const nomeCliente = document.getElementById('nomeCliente').value;
+        const telefoneCliente = document.getElementById('telefoneCliente').value;
+        const formaPagamento = document.getElementById('formaPagamento').value;
+
+        if (Object.keys(cart).length === 0) {
+            alert("Seu carrinho está vazio!");
+            return;
+        }
+        if (!nomeCliente || !telefoneCliente) {
+            alert("Por favor, preencha seu nome e WhatsApp.");
+            return;
+        }
+
+        const orderData = {
+            nomeCliente,
+            telefoneCliente,
+            formaPagamento,
+            itens: Object.keys(cart).map(key => ({ nome: key, quantidade: cart[key] }))
+        };
+
+        const submitButton = document.getElementById('submit-order');
+        submitButton.disabled = true;
+        submitButton.innerText = 'Enviando...';
+
+        try {
+            // 1. Registra o pedido no Google Sheets
+            const url = `${API_BASE_URL}?action=addOrder&data=${encodeURIComponent(JSON.stringify(orderData))}`;
+            const res = await fetch(url);
+            const result = await res.json();
+
+            if (!result.success) {
+                throw new Error(result.error || 'Falha ao registrar pedido.');
+            }
+
+            // 2. Envia a mensagem no WhatsApp
+            sendWhatsAppMessage(orderData);
+            
+            alert('Pedido enviado com sucesso!');
+            // Limpa o formulário e o carrinho
+            window.location.reload(); 
+
+        } catch (error) {
+            alert(`Ocorreu um erro ao finalizar o pedido: ${error.message}`);
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerText = 'Finalizar Pedido e Enviar via WhatsApp';
+        }
+    }
+
+    function sendWhatsAppMessage(orderData) {
+        let message = `*HS Cozinha Caseira - Novo Pedido* 🍲\n\n`;
+        message += `*Cliente:* ${orderData.nomeCliente}\n`;
+        message += `*Contato:* ${orderData.telefoneCliente}\n\n`;
+        message += `*-- ITENS DO PEDIDO --*\n`;
+        
+        orderData.itens.forEach(item => {
+            message += `- ${item.nome} (x${item.quantidade})\n`;
+        });
+
+        message += `\n*Forma de Pagamento:* ${orderData.formaPagamento}\n\n`;
+        message += `--------------------------------------\n`;
+        message += `Obrigado pelo seu pedido! Já estamos providenciando o mesmo.`;
+
+        const encodedMsg = encodeURIComponent(message);
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMsg}`, '_blank');
+    }
+  </script>
+
+</body>
+</html>
